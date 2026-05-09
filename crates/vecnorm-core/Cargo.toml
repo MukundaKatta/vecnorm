@@ -1,0 +1,22 @@
+[package]
+name = "vecnorm-core"
+description = "Pure-Rust core for vecnorm: bulk vector ops on f32 matrices."
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+ndarray = { workspace = true }
+rayon = { workspace = true }
+thiserror = { workspace = true }
+
+[lib]
+path = "src/lib.rs"
