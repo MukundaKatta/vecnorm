@@ -105,6 +105,39 @@ pub fn cosine_similarity(a: &ArrayView1<'_, f32>, b: &ArrayView1<'_, f32>) -> Re
     Ok(dot / denom)
 }
 
+/// Inner product (dot product) of two 1-D vectors. No normalization.
+/// Errors on dim mismatch.
+pub fn dot_product(a: &ArrayView1<'_, f32>, b: &ArrayView1<'_, f32>) -> Result<f32> {
+    if a.len() != b.len() {
+        return Err(VecNormError::DimensionMismatch {
+            a: a.shape().to_vec(),
+            b: b.shape().to_vec(),
+        });
+    }
+    let mut s = 0.0_f32;
+    for (&x, &y) in a.iter().zip(b.iter()) {
+        s += x * y;
+    }
+    Ok(s)
+}
+
+/// Single argmax: returns `(index, score)` of the largest element. Ties
+/// broken by ascending index. Errors on empty input.
+pub fn argmax(scores: &ArrayView1<'_, f32>) -> Result<(usize, f32)> {
+    if scores.is_empty() {
+        return Err(VecNormError::KZero);
+    }
+    let mut best_i = 0usize;
+    let mut best_v = scores[0];
+    for (i, &v) in scores.iter().enumerate().skip(1) {
+        if v > best_v {
+            best_v = v;
+            best_i = i;
+        }
+    }
+    Ok((best_i, best_v))
+}
+
 /// Top-k argmax over a 1-D score vector. Returns `(index, score)` pairs in
 /// descending order. Ties broken by ascending index.
 pub fn top_k_argmax(scores: &ArrayView1<'_, f32>, k: usize) -> Result<Vec<(usize, f32)>> {
@@ -281,6 +314,41 @@ mod tests {
         let c = arr1(&[0.0_f32, 1.0]);
         assert!((cosine_similarity(&a.view(), &b.view()).unwrap() - 1.0).abs() < 1e-6);
         assert!(cosine_similarity(&a.view(), &c.view()).unwrap().abs() < 1e-6);
+    }
+
+    #[test]
+    fn dot_product_basic() {
+        let a = arr1(&[1.0_f32, 2.0, 3.0]);
+        let b = arr1(&[4.0_f32, -5.0, 6.0]);
+        // 1*4 + 2*(-5) + 3*6 = 4 - 10 + 18 = 12.
+        assert!((dot_product(&a.view(), &b.view()).unwrap() - 12.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn dot_product_dim_mismatch() {
+        let a = arr1(&[1.0_f32, 0.0]);
+        let b = arr1(&[1.0_f32]);
+        assert!(dot_product(&a.view(), &b.view()).is_err());
+    }
+
+    #[test]
+    fn argmax_picks_largest() {
+        let s = arr1(&[1.0_f32, 5.0, 3.0, 4.0, 2.0]);
+        let (i, v) = argmax(&s.view()).unwrap();
+        assert_eq!(i, 1);
+        assert!((v - 5.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn argmax_ties_pick_lowest_index() {
+        let s = arr1(&[3.0_f32, 3.0, 3.0]);
+        assert_eq!(argmax(&s.view()).unwrap().0, 0);
+    }
+
+    #[test]
+    fn argmax_empty_rejected() {
+        let s: ndarray::Array1<f32> = arr1(&[]);
+        assert!(argmax(&s.view()).is_err());
     }
 
     #[test]
