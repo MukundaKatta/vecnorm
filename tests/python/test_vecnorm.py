@@ -39,6 +39,21 @@ def test_l2_normalize_requires_float32() -> None:
         l2_normalize(a)
 
 
+def test_l2_normalize_rejects_non_contiguous() -> None:
+    # A non-C-contiguous float32 view cannot be normalized in place without a
+    # silent copy, so it must be rejected rather than appear to no-op.
+    a = np.asfortranarray(np.array([[3.0, 4.0], [6.0, 8.0]], dtype=np.float32))
+    assert not a.flags["C_CONTIGUOUS"]
+    with pytest.raises(ValueError, match="C-contiguous"):
+        l2_normalize(a)
+
+
+def test_l2_normalize_in_place_mutates_caller() -> None:
+    a = np.array([[3.0, 4.0], [6.0, 8.0]], dtype=np.float32)
+    l2_normalize(a)
+    np.testing.assert_allclose(a, [[0.6, 0.8], [0.6, 0.8]], atol=1e-6)
+
+
 def test_l2_normalize_copy_coerces_dtype() -> None:
     a = np.array([[3.0, 4.0]], dtype=np.float64)
     out = l2_normalize_copy(a)

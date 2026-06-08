@@ -69,7 +69,15 @@ def l2_normalize(matrix: NDArray[np.float32]) -> None:
             f"in-place l2_normalize requires float32 input, got {matrix.dtype}; "
             "use l2_normalize_copy to convert"
         )
-    _l2_normalize(np.ascontiguousarray(matrix))
+    if not matrix.flags["C_CONTIGUOUS"]:
+        # np.ascontiguousarray would silently return a *copy* here, so the
+        # in-place normalization would write to the copy and leave the
+        # caller's array untouched. Refuse rather than corrupt the contract.
+        raise ValueError(
+            "in-place l2_normalize requires a C-contiguous array; "
+            "pass np.ascontiguousarray(matrix) or use l2_normalize_copy"
+        )
+    _l2_normalize(matrix)
 
 
 def l2_normalize_copy(matrix: NDArray[np.float32]) -> NDArray[np.float32]:

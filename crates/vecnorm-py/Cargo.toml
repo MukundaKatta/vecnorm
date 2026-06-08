@@ -16,7 +16,7 @@ name = "vecnorm_native"
 crate-type = ["cdylib"]
 
 [dependencies]
-vecnorm-core = { path = "../vecnorm-core", version = "0.1.0" }
+vecnorm-core = { path = "../vecnorm-core", version = "0.1.1" }
 pyo3 = { version = "0.23", features = ["abi3-py310", "extension-module"] }
 numpy = "0.23"
 ndarray = { workspace = true }
