@@ -16,7 +16,7 @@ keywords = ["vector", "embeddings", "cosine", "topk", "ndarray"]
 categories = ["science", "algorithms"]
 
 [workspace.dependencies]
-ndarray = { version = "0.16", features = ["rayon"] }
+ndarray = { version = "0.17", features = ["rayon"] }
 rayon = "1.10"
 thiserror = "2.0"
 
